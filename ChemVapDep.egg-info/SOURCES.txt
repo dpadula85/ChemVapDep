@@ -1,0 +1,9 @@
+LICENSE
+README.md
+setup.py
+ChemVapDep.egg-info/PKG-INFO
+ChemVapDep.egg-info/SOURCES.txt
+ChemVapDep.egg-info/dependency_links.txt
+ChemVapDep.egg-info/entry_points.txt
+ChemVapDep.egg-info/not-zip-safe
+ChemVapDep.egg-info/top_level.txt

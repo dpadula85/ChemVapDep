@@ -1,0 +1,11 @@
+Metadata-Version: 2.1
+Name: ChemVapDep
+Version: 1.0
+Summary: A python package to run Chemical Vapout Deposition MD simulations with
+Home-page: https://github.com/XelaleX1/cif2coupling
+Author: Daniele Padula
+Author-email: dpadula85@yahoo.it
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: GNU GPL License
+Classifier: Operating System :: OS Independent
+License-File: LICENSE
