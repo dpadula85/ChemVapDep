@@ -12,7 +12,7 @@ setup(
         A python package to run Chemical Vapout Deposition MD simulations with
         GROMACS.
         ''',
-    url="https://github.com/XelaleX1/cif2coupling",
+    url="https://github.com/dpadula85/ChemVapDep",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
