@@ -254,13 +254,14 @@ def deposit_molecules(**Opts):
                         f=os.path.basename(newsurf),
                     )
 
-                # Select atoms with low z coordinate to keep the surface in place
+                # Select atoms with low deposition coordinate to keep the
+                # surface in place, preventing it to drift
                 ax = Opts["DepAx"]
                 g = u.select_atoms(f"resname {surfres} and prop {ax} <= 4.0")
                 with mda.selections.gromacs.SelectionWriter('index.ndx', mode='a') as ndx:
                     ndx.write(g, name='base')
 
-                # Update topology adding one molecule
+                # Update topology adding one molecule (or more)
                 topold = os.path.join(currentdir, Opts['TopFile'] + ".old")
                 with open(topold) as top:
                     lines = top.readlines()
