@@ -213,7 +213,9 @@ def deposit_molecules(**Opts):
         # Add one molecule to the simulation
         # Maybe can be improved to add more than one, but this can be easily
         # solved by providing an input file for the molecule to be deposited
-        # that contains more than one residue.
+        # that contains more than one residue. In this case be aware to change
+        # line number 268 to obtain a correct topology to run the deposition
+        # simulation.
         result = False
         attempts = 0
 
@@ -254,7 +256,7 @@ def deposit_molecules(**Opts):
 
                 # Select atoms with low z coordinate to keep the surface in place
                 ax = Opts["DepAx"]
-                g = u.select_atoms(f"resname PCB and prop {ax} <= 4.0")
+                g = u.select_atoms(f"resname {surfres} and prop {ax} <= 4.0")
                 with mda.selections.gromacs.SelectionWriter('index.ndx', mode='a') as ndx:
                     ndx.write(g, name='base')
 
