@@ -30,7 +30,7 @@ def options():
             type=str,
             required=True,
             dest='SurfFile',
-            help='''Surface coordinates.'''
+            help='''Surface coordinates (.gro format).'''
         )
 
     inp.add_argument(
@@ -39,7 +39,7 @@ def options():
             type=str,
             required=True,
             dest='MolFile',
-            help='''Molecule coordinates.'''
+            help='''Molecule coordinates (.gro format).'''
         )
 
     inp.add_argument(
@@ -67,7 +67,7 @@ def options():
             type=str,
             required=True,
             dest='TopFile',
-            help='''Initial topology.'''
+            help='''Initial topology (.top format).'''
         )
 
     inp.add_argument(
@@ -189,26 +189,18 @@ def deposit_molecules(**Opts):
         else:
             idx = 2
 
-        molres = Opts["MolResName"]
         surfres = Opts["SurfResName"]
         u = mda.Universe(os.path.basename(oldsurf))
         box = u.dimensions
-
-        # Error handling for first loop when no molecules are deposited
-        # requesting the max from an empty array gives a ValueError
-        try:
-            mollow = u.select_atoms(f"resname {molres}").positions[:,idx].max() / 10.0
-        except ValueError:
-            mollow = -np.inf
-
-        surflow = u.select_atoms(f"resname {surfres}").positions[:,idx].max() / 10.0
+        maxdeplen = box[idx] / 10
 
         # Define the region of space along the deposition axis where the new
         # molecule can be selected at the beginning of the simulation.
-        # Let's say 10-15 A from the highest coordinate along the deposition
+        # Let's say 30-50 A from the highest coordinate along the deposition
         # axis, but this is totally arbitrary and depends on the LJ curve.
-        low = np.max([ mollow, surflow ]) + 1.0
-        high = low + 0.5
+        low = u.select_atoms(f"resname {surfres}").positions[:,idx].max() / 10.0
+        low += 3.0
+        high = np.max([ maxdeplen - 1.0, low + 1.0 ])
 
         # Add one molecule to the simulation
         # Maybe can be improved to add more than one, but this can be easily
@@ -273,6 +265,18 @@ def deposit_molecules(**Opts):
                 with open(topname, "w") as top:
                     top.writelines(lines)
 
+                # Add velocities to the new molecule, directed towards the surface
+                # Replace normally distributed velocities with Maxwell-Boltzmann ones
+                # along the deposition direction.
+                vels = u.atoms.velocities
+                u1 = mda.Universe(os.path.basename(newsurf))
+                nnew = u1.atoms.positions.shape[0] - u.atoms.positions.shape[0]
+                vels_newmol = np.zeros((nnew, 3))
+                vels_newmol[:,idx] = np.random.normal(loc=-8.0, scale=2.0, size=nnew)
+                newvels = np.r_[ vels, vels_newmol ]
+                u1.trajectory.ts.velocities = newvels
+                u1.atoms.write(os.path.basename(newsurf))
+
                 # Grompp
                 mdpfile = os.path.join(currentdir, Opts['MDPFile'])
                 tprfile = "deposit_%03d.tpr" % counter
@@ -294,7 +298,7 @@ def deposit_molecules(**Opts):
             except:
                 attempts += 1
                 if attempts % (Opts["MaxTries"] // 50) == 0:
-                    high += 1.0
+                    high += 0.5
                 elif attempts > Opts["MaxTries"]:
                     break
 
@@ -306,7 +310,15 @@ def deposit_molecules(**Opts):
                 nt=16
             )
 
-        # Rename output coordinates for next step
+        # Rename output coordinates for next step. Increase box size after
+        # # 20 molecules have been deposited.
+        # if counter % 20 == 0:
+        #     u = mda.Universe("%s.gro" % tprfile_base)
+        #     box = u.dimensions
+        #     box[idx] += 10
+        #     u.dimensions = box
+        #     u.atoms.write(Opts['SurfFile'])
+        # else:
         sh.copy("%s.gro" % tprfile_base, Opts['SurfFile'])
 
         # Update counter
